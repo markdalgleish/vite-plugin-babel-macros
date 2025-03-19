@@ -26,6 +26,15 @@ function definePluginTests(macrosPlugin: typeof macrosPluginEsm) {
     expect(result?.code).toMatchInlineSnapshot(`"const result = 3;"`)
   })
 
+  test("query strings", async () => {
+    const code = `
+    import preval from 'preval.macro'
+    const result = preval\`module.exports = 1 + 2\`
+    `
+    const result = await macrosPlugin().transform(code, "file.js?query=string")
+    expect(result?.code).toMatchInlineSnapshot(`"const result = 3;"`)
+  })
+
   test("typechecks as a vite plugin", () => {
     const plugin: Plugin = macrosPlugin()
   })
@@ -37,7 +46,26 @@ function definePluginTests(macrosPlugin: typeof macrosPluginEsm) {
 
   test("vite integration", async () => {
     let result = await build({
-      root: join(__dirname, "../test/fixture"),
+      root: join(__dirname, "../test/fixtures/basic"),
+      plugins: [macrosPlugin()],
+      logLevel: "silent",
+      build: {
+        minify: false,
+        write: false,
+      },
+    })
+    result = [result].flat()[0] as RollupOutput
+
+    const code = result.output.find(
+      (item): item is OutputChunk => item.type === "chunk",
+    )?.code
+
+    expect(code).toContain(`alert("it's a secret\\n")`)
+  }, 10000)
+
+  test("vite integration with query strings", async () => {
+    let result = await build({
+      root: join(__dirname, "../test/fixtures/query-string"),
       plugins: [macrosPlugin()],
       logLevel: "silent",
       build: {

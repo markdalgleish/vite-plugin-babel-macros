@@ -4,8 +4,8 @@ import type { TransformResult } from "vite"
 
 const require = createRequire(import.meta.url)
 
-const sourceRegex = /\.(j|t)sx?$/
-const tsxRegex = /\.(j|t)sx$/ // all files are being interpreted as TS, so we'll treat JSX as TSX
+const sourceRegex = /\.(j|t)sx?(\?[^?]*)?$/
+const tsxRegex = /\.(j|t)sx?(\?[^?]*)?$/ // all files are being interpreted as TS, so we'll treat JSX as TSX
 
 export default function macrosPlugin() {
   return {
@@ -22,6 +22,7 @@ export default function macrosPlugin() {
 
       const result = await babel.transformAsync(source, {
         filename,
+        sourceFileName: filename.split("?")[0],
         plugins: [
           require.resolve("@babel/plugin-syntax-jsx"),
           [
